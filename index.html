@@ -71,8 +71,6 @@
       font-size: 1.6rem;
     }
 
-    /* подзаголовок удалён */
-
     .app-badge {
       padding: 6px 12px;
       border-radius: 999px;
@@ -192,7 +190,6 @@
       margin: 0;
     }
 
-    /* маленькая ресайзимая обёртка для картинок */
     .resizable {
       display: inline-block;
       position: relative;
@@ -229,7 +226,6 @@
       opacity: 0.8;
     }
 
-    /* Музыкальный плеер */
     .music-container {
       padding: 8px 16px;
       background: #e5e7eb;
@@ -375,7 +371,7 @@
       <!-- Россия-спецкнопки + картинки -->
       <div class="toolbar-group">
         <button class="tool-btn" type="button" onclick="insertFlag()">
-          <span class="icon">🇷🇺</span> Вставить флаг
+          <span class="icon">🇷🇺</span> Вставить RU
         </button>
         <button class="tool-btn" type="button" onclick="insertPatrioticHeader()">
           ✨ Заголовок России
@@ -385,6 +381,9 @@
         </button>
         <button class="tool-btn" type="button" onclick="insertPutin()">
           ☀ Лик солнцеликового
+        </button>
+        <button class="tool-btn" type="button" onclick="insertApology()">
+          📝 Извиниться перед Рамзаном
         </button>
         <button class="tool-btn" type="button" onclick="saveAsWord()">
           💾 Word
@@ -485,7 +484,6 @@
       execCmd('fontName', fontName);
     }
 
-    // размер шрифта в pt
     function setFontSizePt(pt) {
       if (!pt) return;
       focusEditor();
@@ -532,7 +530,6 @@
       document.getElementById('image-input').click();
     }
 
-    // вставка произвольной картинки
     function insertImageFromFile(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -551,7 +548,6 @@
       reader.readAsDataURL(file);
     }
 
-    // вставка putin.jpg
     function insertPutin() {
       focusEditor();
       const html =
@@ -561,6 +557,35 @@
       document.execCommand('insertHTML', false, html);
       updateStatus('Вставлен лик солнцеликового (putin.jpg) — потяни за уголки.');
     }
+
+    // 🔹 Шаблон извинения + герб
+    function insertApology() {
+  const editor = document.getElementById('editor');
+
+  // полная очистка редактора
+  editor.innerHTML = '';
+
+  const html = `
+    <div style="margin-top:24px;margin-bottom:24px;border:1px solid #e5e7eb;padding:16px 20px;max-width:700px;margin-left:auto;margin-right:auto;background:#ffffff;">
+      <img src="img/rus_gerb.png" alt="Герб РФ" style="display:block;margin:0 auto 8px auto;max-height:80px;">
+      <h2 style="text-align:center;margin:4px 0 12px 0;">Извинение №__</h2>
+      <p>Кому: Главе Чеченской республике Кадырову Рамзану Ахматовичу<br>От: ___________________________</p>
+      <p>Я, ____________________________ (ФИО), приношу свои искренние извинения за то, что ________________________________________________.</p>
+      <p>Моим словам/поступкам (нужное подчеркнуть) нет никаких оправданий и ________________________________________________.</p>
+      <p>Я весьма сожалею, что ________________________________________________.</p>
+      <p>И в том, что ________________________________________________, тоже моя вина. Ещё раз прошу прощения.</p>
+      <p>С наилучшими пожеланиями,<br>____________________________ (ФИО).</p>
+      <p>Дата: «____» __________ 20__ г.<br>Подпись: ____________________</p>
+    </div>
+  `;
+
+  // вставляем шаблон
+  editor.innerHTML = html;
+
+  updateStatus('Вставлен шаблон извинения.');
+  focusEditor();
+}
+
 
     function saveAsWord() {
       const header =
@@ -614,12 +639,11 @@
       window.open(url, '_blank');
     }
 
-    // --- Музыка ---
     const playlist = [
-      { src: 'music/track1.mp3', title: 'Трек 1' },
-      { src: 'music/track2.mp3', title: 'Трек 2' },
-      { src: 'music/track3.mp3', title: 'Трек 3' },
-      { src: 'music/track4.mp3', title: 'Трек 4' }
+      { src: 'music/track1.mp3', title: 'Гимн России' },
+      { src: 'music/track2.mp3', title: 'Я РУССКИЙ - SHAMAN' },
+      { src: 'music/track3.mp3', title: 'МЫ - SHAMAN' },
+      { src: 'music/track4.mp3', title: 'Служить России - хор ВС РФ' }
     ];
 
     let currentTrack = 0;
@@ -707,7 +731,6 @@
       updateStatus();
     });
 
-    // initial
     updateStatus();
     setZoom(100);
     initMusicRefs();
