@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Редактор Великой России</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      /* фон всего окна — цвета российского флага */
+      background: linear-gradient(
+        to bottom,
+        #ffffff 0%,
+        #ffffff 33.33%,
+        #1f4ab8 33.33%,
+        #1f4ab8 66.66%,
+        #ce1c1c 66.66%,
+        #ce1c1c 100%
+      );
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .app-wrapper {
+      width: 100%;
+      max-width: 1200px;
+      margin: 24px;
+      background: rgba(249, 250, 251, 0.96);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4);
+      border: 2px solid #d1d5db;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .app-header {
+      padding: 16px 24px;
+      background: linear-gradient(to right, #ffffff, #1746a2, #ce1c1c);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .app-header-main {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .app-title {
+      font-size: 1.4rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #111827; /* чёрный текст заголовка */
+    }
+
+    .flag-emoji {
+      font-size: 1.6rem;
+    }
+
+    /* подзаголовок удалён */
+
+    .app-badge {
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(249, 250, 251, 0.95);
+      color: #111827;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      white-space: nowrap;
+      border: 1px solid rgba(15, 23, 42, 0.3);
+    }
+
+    .toolbar {
+      padding: 8px 12px;
+      background: #f3f4f6;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .toolbar-group {
+      display: flex;
+      gap: 4px;
+      padding: 4px;
+      border-radius: 999px;
+      background: #e5e7eb;
+    }
+
+    button.tool-btn {
+      border: none;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #ffffff;
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+      transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.08s ease;
+      white-space: nowrap;
+    }
+
+    button.tool-btn span.icon {
+      font-size: 0.9rem;
+    }
+
+    button.tool-btn:hover {
+      background: #eef2ff;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(55, 65, 81, 0.3);
+    }
+
+    button.tool-btn:active {
+      transform: translateY(0);
+      box-shadow: 0 1px 2px rgba(55, 65, 81, 0.2);
+    }
+
+    select.tool-select {
+      border: none;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #ffffff;
+      font-size: 0.8rem;
+      cursor: pointer;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+      outline: none;
+      max-width: 150px;
+    }
+
+    .zoom-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #e5e7eb;
+      font-size: 0.75rem;
+      white-space: nowrap;
+    }
+
+    .zoom-group input[type="range"] {
+      width: 110px;
+    }
+
+    .editor-outer {
+      flex: 1;
+      background: transparent;
+      padding: 16px;
+      overflow: auto;
+    }
+
+    .editor-wrapper {
+      margin: 0 auto;
+      width: 210mm;
+      min-height: 297mm;
+      background: #ffffff;
+      padding: 20mm 18mm;
+      border-radius: 4px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+      border: 1px solid #e5e7eb;
+      transform-origin: top center;
+    }
+
+    #editor {
+      min-height: 240mm;
+      outline: none;
+    }
+
+    #editor img {
+      display: block;
+      margin: 0;
+    }
+
+    /* маленькая ресайзимая обёртка для картинок */
+    .resizable {
+      display: inline-block;
+      position: relative;
+      resize: both;
+      overflow: hidden;
+      border: 1px dashed #9ca3af;
+      margin: 8px auto;
+      padding: 0;
+      max-width: 100%;
+      min-width: 40px;
+      min-height: 40px;
+      width: 160px;
+      height: 160px;
+    }
+
+    .resizable img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    .status-bar {
+      padding: 8px 16px;
+      font-size: 0.8rem;
+      background: #f9fafb;
+      border-top: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .status-bar span {
+      opacity: 0.8;
+    }
+
+    /* Музыкальный плеер */
+    .music-container {
+      padding: 8px 16px;
+      background: #e5e7eb;
+      border-top: 1px solid #d1d5db;
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .music-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .music-info {
+      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .music-title {
+      font-weight: 600;
+    }
+
+    .link-icon-img {
+      height: 20px;
+      width: 20px;
+      object-fit: contain;
+      vertical-align: middle;
+      border-radius: 4px;
+    }
+
+    @media (max-width: 900px) {
+      .app-wrapper {
+        margin: 8px;
+      }
+
+      .toolbar {
+        position: static;
+      }
+
+      .editor-outer {
+        padding: 8px;
+      }
+
+      .editor-wrapper {
+        transform-origin: top left;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-wrapper">
+    <header class="app-header">
+      <div class="app-header-main">
+        <div class="app-title">
+          <span class="flag-emoji">🇷🇺</span>
+          Редактор России (A4)
+        </div>
+      </div>
+      <div class="app-badge">
+        С любовью к Родине
+      </div>
+    </header>
+
+    <div class="toolbar">
+      <!-- Шрифты -->
+      <div class="toolbar-group">
+        <select class="tool-select" onchange="setFontName(this.value)">
+          <option value="" disabled selected>Шрифт</option>
+          <option value="Times New Roman">Times New Roman</option>
+          <option value="Georgia">Georgia</option>
+          <option value="Arial">Arial</option>
+          <option value="Verdana">Verdana</option>
+          <option value="Courier New">Courier New</option>
+        </select>
+
+        <select class="tool-select" onchange="setFontSizePt(this.value)">
+          <option value="" disabled selected>Размер (pt)</option>
+          <option value="10">10 pt</option>
+          <option value="11">11 pt</option>
+          <option value="12">12 pt</option>
+          <option value="14">14 pt</option>
+          <option value="16">16 pt</option>
+          <option value="18">18 pt</option>
+          <option value="24">24 pt</option>
+          <option value="32">32 pt</option>
+        </select>
+      </div>
+
+      <!-- Стиль текста -->
+      <div class="toolbar-group">
+        <button class="tool-btn" type="button" onclick="execCmd('bold')">
+          <span class="icon"><b>Ж</b></span> жирный
+        </button>
+        <button class="tool-btn" type="button" onclick="execCmd('italic')">
+          <span class="icon"><i>К</i></span> курсив
+        </button>
+        <button class="tool-btn" type="button" onclick="execCmd('underline')">
+          <span class="icon"><u>Ч</u></span> подчёркнутый
+        </button>
+      </div>
+
+      <!-- Заголовки -->
+      <div class="toolbar-group">
+        <button class="tool-btn" type="button" onclick="setBlock('H1')">
+          <span class="icon">H1</span> Россия
+        </button>
+        <button class="tool-btn" type="button" onclick="setBlock('H2')">
+          <span class="icon">H2</span> Родина
+        </button>
+        <button class="tool-btn" type="button" onclick="setBlock('H3')">
+          <span class="icon">H3</span> Русский текст
+        </button>
+      </div>
+
+      <!-- Списки и выравнивание -->
+      <div class="toolbar-group">
+        <button class="tool-btn" type="button" onclick="execCmd('insertUnorderedList')">
+          • Список
+        </button>
+        <button class="tool-btn" type="button" onclick="execCmd('insertOrderedList')">
+          1. Список
+        </button>
+      </div>
+
+      <div class="toolbar-group">
+        <button class="tool-btn" type="button" onclick="execCmd('justifyLeft')">
+          ⬅ Лево
+        </button>
+        <button class="tool-btn" type="button" onclick="execCmd('justifyCenter')">
+          ⬌ Центр
+        </button>
+        <button class="tool-btn" type="button" onclick="execCmd('justifyRight')">
+          ➡ Право
+        </button>
+      </div>
+
+      <!-- Россия-спецкнопки + картинки -->
+      <div class="toolbar-group">
+        <button class="tool-btn" type="button" onclick="insertFlag()">
+          <span class="icon">🇷🇺</span> Вставить флаг
+        </button>
+        <button class="tool-btn" type="button" onclick="insertPatrioticHeader()">
+          ✨ Заголовок России
+        </button>
+        <button class="tool-btn" type="button" onclick="triggerImageInput()">
+          🖼️ Вставить изображение
+        </button>
+        <button class="tool-btn" type="button" onclick="insertPutin()">
+          ☀ Лик солнцеликового
+        </button>
+        <button class="tool-btn" type="button" onclick="saveAsWord()">
+          💾 Word
+        </button>
+      </div>
+
+      <!-- Музыка -->
+      <div class="toolbar-group">
+        <button class="tool-btn" type="button" onclick="toggleMusicPlayer()">
+          🎵 Слушать музыку
+        </button>
+      </div>
+
+      <!-- Ссылки на сервисы -->
+      <div class="toolbar-group">
+        <button class="tool-btn" type="button" onclick="openLink('https://eais.rkn.gov.ru/feedback/')">
+          ⚠️ Доложить об экстремистских материалах
+        </button>
+        <button class="tool-btn" type="button" onclick="openLink('https://реестрповесток.рф/')">
+          📜 Реестр повесток
+        </button>
+      </div>
+
+      <div class="toolbar-group">
+        <button class="tool-btn" type="button" onclick="openLink('https://max.ru/')">
+          MAX
+        </button>
+        <a href="https://max.ru/" target="_blank" title="MAX">
+          <img src="img/max.jpg" alt="MAX" class="link-icon-img" />
+        </a>
+        <a href="https://www.gosuslugi.ru/" target="_blank" title="Госуслуги">
+          <img src="img/gos.png" alt="Госуслуги" class="link-icon-img" />
+        </a>
+      </div>
+
+      <!-- Зум -->
+      <div class="zoom-group">
+        Зум:
+        <input type="range" min="50" max="200" value="100" id="zoom-range" oninput="setZoom(this.value)" />
+        <span id="zoom-label">100%</span>
+      </div>
+    </div>
+
+    <!-- Музыкальный плеер (по кнопке) -->
+    <div id="music-container" class="music-container">
+      <div class="music-controls">
+        <button class="tool-btn" type="button" onclick="prevTrack()">⏮ Предыдущий</button>
+        <button class="tool-btn" type="button" onclick="playPause()" id="play-pause-btn">▶️ Воспроизвести</button>
+        <button class="tool-btn" type="button" onclick="nextTrack()">⏭ Следующий</button>
+        <button class="tool-btn" type="button" onclick="toggleLoop()" id="loop-btn">🔁 Зациклить</button>
+      </div>
+      <div class="music-info">
+        <span>Сейчас играет:</span>
+        <span class="music-title" id="music-track-title">—</span>
+      </div>
+      <audio id="audio-player"></audio>
+    </div>
+
+    <div class="editor-outer">
+      <div class="editor-wrapper" id="editor-wrapper">
+        <div id="editor" contenteditable="true">
+          <h1 style="text-align:center;">Русские вперёд!!!</h1>
+          <p style="font-size:12pt;">
+            СЛОВНО ХУЙ ДРОЧЕНЫЙ В ЖОПУ ПИДОРА!!! В УКРАИНУ РАТЬ РОССИЙСКАЯ ВОШЛА!!! НЕ ОСТАВИВ ФАШИКАМ НИ ВЫБОРА!!! АРМИЯ НА КИЕВ В БОЙ ПОШЛА!!! СКОРО ВЫ УЕБИЩА ОТВЕТИТЕ!!! ЗА МАЙДАН ЗА СЛЁЗЫ ДОНБАСЯТ!!! ЕСЛИ НЕ ИЗДОХНИТЕ ПОЕДЕТЕ!!! НА КИЧУ ЛЕТ МИНИМУМ НА ПЯТЬ!!! ВЫ МОЛИТЕСЬ СУКИ О ПРОЩЕНИИ!!! ЧТОБ ВАС НЕКРОМСАЛИ КАК СВИНЕЙ!!! МЫ ИМЕЕМ ПРАВО НА ОТМЩЕНИЕ!!! БОЛЬШЕ ТЫ В МИРНЯК СТРЕЛЯТЬ НЕ СМЕЙ!!! ВСТАНЬТЕ НА КОЛЕНИ СУКИ ЕБАНЫЕ!!! ПРИГОТОВЬТЕСЬ ПАСТЬЮ ХУЙ СОСАТЬ!!! ЖОПЫ ВАШИ БУДУТ ЖЕТСКО ВЫЕБАНЫ!!! ТОЛЬКО ТАК МЫ БУДЕМ ВАС "ПРОЩАТЬ"!!! ВОСЕМЬ ЛЕТ ДОНБАСС ХОТЕЛИ ВЫЕБАТЬ!!! А ТЕПЕРЬ ЖЕ ВСЕ НАОБОРОТ!!! ЕСТЬ У ВАС УЕБИЩ ПРАВО ВЫБИРАТЬ!!! РУССКИЙ ХУЙ СОВАТЬ ИЛЬ В ЖОПУ ИЛИ ВРОТ!!! С УВАЖЕНИЕМ ДЕНИС ЧЕРНУХИН 22 МАРТА 2022 ГОДА Г. СЕРПУХОВ
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="status-bar">
+      <span>Страница: формат A4 (210×297 мм) • Сохранение: .doc (откроется в Word и аналогах)</span>
+      <span id="status-info">Готов к вводу текста для России 🇷🇺</span>
+    </div>
+  </div>
+
+  <!-- Скрытый инпут для вставки изображений -->
+  <input
+    type="file"
+    id="image-input"
+    accept="image/*"
+    style="display:none"
+    onchange="insertImageFromFile(event)"
+  />
+
+  <script>
+    function focusEditor() {
+      document.getElementById('editor').focus();
+    }
+
+    function execCmd(command, value = null) {
+      focusEditor();
+      document.execCommand(command, false, value);
+      updateStatus();
+    }
+
+    function setFontName(fontName) {
+      if (!fontName) return;
+      execCmd('fontName', fontName);
+    }
+
+    // размер шрифта в pt
+    function setFontSizePt(pt) {
+      if (!pt) return;
+      focusEditor();
+      document.execCommand('fontSize', false, '4');
+      const editor = document.getElementById('editor');
+      const fonts = editor.getElementsByTagName('font');
+      for (let i = 0; i < fonts.length; i++) {
+        fonts[i].removeAttribute('size');
+        fonts[i].style.fontSize = pt + 'pt';
+      }
+      updateStatus(`Размер шрифта: ${pt} pt`);
+    }
+
+    function setBlock(block) {
+      execCmd('formatBlock', block);
+    }
+
+    function insertFlag() {
+      focusEditor();
+      document.execCommand('insertText', false, ' 🇷🇺 ');
+      updateStatus('Вставлен флаг России.');
+    }
+
+    function insertPatrioticHeader() {
+      const templates = [
+        'Слава великой России!',
+        'Россия — наша сила и будущее!',
+        'Родина, которую мы пишем словами.',
+        'Русский дух, русское слово, русская сила.',
+        'Россия объединяет, вдохновляет и ведёт вперёд.'
+      ];
+      const text = templates[Math.floor(Math.random() * templates.length)];
+      const html =
+        '<h2 style="text-align:center;">' +
+        text +
+        ' 🇷🇺</h2><p style="font-size:12pt;"></p>';
+      focusEditor();
+      document.execCommand('insertHTML', false, html);
+      updateStatus('Добавлен патриотичный заголовок.');
+    }
+
+    function triggerImageInput() {
+      document.getElementById('image-input').value = '';
+      document.getElementById('image-input').click();
+    }
+
+    // вставка произвольной картинки
+    function insertImageFromFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const dataURL = e.target.result;
+        focusEditor();
+        const html =
+          '<span class="resizable"><img src="' +
+          dataURL +
+          '" alt="Изображение" /></span>';
+        document.execCommand('insertHTML', false, html);
+        updateStatus('Изображение вставлено (можно тянуть за уголки).');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // вставка putin.jpg
+    function insertPutin() {
+      focusEditor();
+      const html =
+        '<span class="resizable">' +
+        '<img src="img/putin.jpg" alt="Лик солнцеликового" />' +
+        '</span>';
+      document.execCommand('insertHTML', false, html);
+      updateStatus('Вставлен лик солнцеликового (putin.jpg) — потяни за уголки.');
+    }
+
+    function saveAsWord() {
+      const header =
+        '<html xmlns:o="urn:schemas-microsoft-com:office:office" ' +
+        'xmlns:w="urn:schemas-microsoft-com:office:word" ' +
+        'xmlns="http://www.w3.org/TR/REC-html40">' +
+        '<head><meta charset="utf-8"><title>Документ России</title></head><body>';
+      const footer = '</body></html>';
+
+      const content = document.getElementById('editor').innerHTML;
+      const sourceHTML = header + content + footer;
+      const blob = new Blob(['\ufeff', sourceHTML], {
+        type: 'application/msword'
+      });
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const date = new Date().toISOString().slice(0, 10);
+      link.href = url;
+      link.download = 'Russia_Text_' + date + '.doc';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      updateStatus('Документ сохранён в формате Word (.doc).');
+    }
+
+    function setZoom(percent) {
+      const wrapper = document.getElementById('editor-wrapper');
+      const zoom = percent / 100;
+      wrapper.style.transform = 'scale(' + zoom + ')';
+      document.getElementById('zoom-label').textContent = percent + '%';
+    }
+
+    function updateStatus(custom) {
+      const editor = document.getElementById('editor');
+      const text = editor.innerText || '';
+      const words = text
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean).length;
+      const chars = text.replace(/\s/g, '').length;
+
+      const base = `Слов: ${words} • Символов (без пробелов): ${chars}`;
+      document.getElementById('status-info').textContent =
+        custom ? custom + ' | ' + base : base;
+    }
+
+    function openLink(url) {
+      window.open(url, '_blank');
+    }
+
+    // --- Музыка ---
+    const playlist = [
+      { src: 'music/track1.mp3', title: 'Трек 1' },
+      { src: 'music/track2.mp3', title: 'Трек 2' },
+      { src: 'music/track3.mp3', title: 'Трек 3' },
+      { src: 'music/track4.mp3', title: 'Трек 4' }
+    ];
+
+    let currentTrack = 0;
+    let isPlaying = false;
+    let musicInited = false;
+
+    let audioPlayer;
+    let trackTitleEl;
+    let playPauseBtn;
+    let loopBtn;
+
+    function initMusicRefs() {
+      audioPlayer = document.getElementById('audio-player');
+      trackTitleEl = document.getElementById('music-track-title');
+      playPauseBtn = document.getElementById('play-pause-btn');
+      loopBtn = document.getElementById('loop-btn');
+
+      audioPlayer.addEventListener('ended', function () {
+        if (!audioPlayer.loop) {
+          nextTrack();
+        }
+      });
+    }
+
+    function loadTrack(index) {
+      if (!audioPlayer) return;
+      if (index < 0) index = playlist.length - 1;
+      if (index >= playlist.length) index = 0;
+      currentTrack = index;
+      audioPlayer.src = playlist[currentTrack].src;
+      trackTitleEl.textContent = playlist[currentTrack].title;
+      audioPlayer.load();
+    }
+
+    function playPause() {
+      if (!audioPlayer) return;
+      if (audioPlayer.paused) {
+        audioPlayer.play();
+        isPlaying = true;
+        playPauseBtn.textContent = '⏸ Пауза';
+      } else {
+        audioPlayer.pause();
+        isPlaying = false;
+        playPauseBtn.textContent = '▶️ Воспроизвести';
+      }
+    }
+
+    function nextTrack() {
+      if (!audioPlayer) return;
+      loadTrack(currentTrack + 1);
+      if (isPlaying) {
+        audioPlayer.play();
+      }
+    }
+
+    function prevTrack() {
+      if (!audioPlayer) return;
+      loadTrack(currentTrack - 1);
+      if (isPlaying) {
+        audioPlayer.play();
+      }
+    }
+
+    function toggleLoop() {
+      if (!audioPlayer) return;
+      audioPlayer.loop = !audioPlayer.loop;
+      loopBtn.textContent = audioPlayer.loop ? '🔁 Повтор: вкл' : '🔁 Зациклить';
+    }
+
+    function toggleMusicPlayer() {
+      const cont = document.getElementById('music-container');
+      if (!musicInited) {
+        initMusicRefs();
+        loadTrack(0);
+        musicInited = true;
+      }
+      if (cont.style.display === 'none' || cont.style.display === '') {
+        cont.style.display = 'flex';
+      } else {
+        cont.style.display = 'none';
+      }
+    }
+
+    document.getElementById('editor').addEventListener('input', function () {
+      updateStatus();
+    });
+
+    // initial
+    updateStatus();
+    setZoom(100);
+    initMusicRefs();
+  </script>
+</body>
+</html>
